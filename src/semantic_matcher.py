@@ -11,41 +11,35 @@ When implementing components in this module, first explain in comments:
 Do not dump unexplained code.
 """
 
+from sentence_transformers import SentenceTransformer, util
+
 def load_embedding_model():
     """
-    Loads a pretrained sentence-transformer model.
-    
-    IMPORTANT: 
-    - Model loading should not happen repeatedly for every button click in Streamlit.
-    - Design this so Streamlit can cache the model using @st.cache_resource.
-    - Model selection should prioritize a lightweight pretrained model (e.g., all-MiniLM-L6-v2) 
-      balancing semantic quality, model size, and inference speed for deployment.
-    
-    Returns:
-        Model object.
+    1. Concept: Sentence Embeddings Model
+    2. Why: Captures meaning and synonyms rather than just exact words.
+    3. Input: None.
+    4. Output: SentenceTransformer instance.
+    5. Library: sentence_transformers.
     """
-    # Phase 4 TODO: Import sentence_transformers and load a lightweight model
-    pass
+    return SentenceTransformer('all-MiniLM-L6-v2')
 
 def calculate_semantic_score(resume_text: str, jd_text: str, model=None) -> float:
     """
-    Calculates a semantic similarity score using pretrained sentence embeddings.
-    
-    This measures meaning overlap (e.g., "Led a cross-functional team" vs "Experience in team leadership").
-    
-    This function should:
-    - Encode resume and JD using the loaded model to generate embeddings.
-    - Calculate cosine similarity between the embeddings.
-    - Return a normalized semantic similarity score (0.0 to 1.0).
-    
-    Args:
-        resume_text (str): Preprocessed resume text.
-        jd_text (str): Preprocessed job description text.
-        model: Preloaded sentence-transformer model.
-        
-    Returns:
-        float: Semantic similarity score.
+    1. Concept: Semantic Similarity Calculation
+    2. Why: Scores the semantic overlap of the resume and JD.
+    3. Input: Raw resume/JD texts and the model.
+    4. Output: Cosine similarity score (float).
+    5. Library: model.encode and util.cos_sim.
     """
-    # Phase 4 TODO: Generate embeddings for both texts
-    # Phase 4 TODO: Calculate and return cosine similarity
-    pass
+    if not resume_text or not jd_text:
+        return 0.0
+        
+    if model is None:
+        model = load_embedding_model()
+        
+    embeddings1 = model.encode(resume_text, convert_to_tensor=True)
+    embeddings2 = model.encode(jd_text, convert_to_tensor=True)
+    
+    cosine_scores = util.cos_sim(embeddings1, embeddings2)
+    return float(cosine_scores[0][0])
+

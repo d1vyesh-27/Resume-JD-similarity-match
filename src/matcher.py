@@ -11,31 +11,69 @@ When implementing components in this module, first explain in comments:
 Do not dump unexplained code.
 """
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import json
+import os
+import numpy as np
+import scipy.sparse as sp
+from functools import lru_cache
+from src.preprocessing import clean_text
+
+@lru_cache(maxsize=1)
+def load_tech_skills() -> set:
+    """Loads technical skills from the taxonomy to use for weighting."""
+    skills_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'tech_skills.json')
+    skills_set = set()
+    try:
+        with open(skills_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # data is a list of dicts: [{"name": "Python", "aliases": ["py"]}, ...]
+            for item in data:
+                name = clean_text(item.get("name", ""))
+                if name:
+                    skills_set.add(name)
+                for alias in item.get("aliases", []):
+                    cleaned_alias = clean_text(alias)
+                    if cleaned_alias:
+                        skills_set.add(cleaned_alias)
+        return skills_set
+    except (FileNotFoundError, json.JSONDecodeError, AttributeError):
+        return set()
+
 def calculate_tfidf_score(resume_text: str, jd_text: str) -> float:
     """
-    Calculates a lexical similarity score using TF-IDF and cosine similarity.
-    
-    This serves as the traditional lexical baseline measuring actual vocabulary overlap.
-    
-    IMPORTANT DESIGN QUESTION (Phase 2):
-    Investigate whether to fit TF-IDF on:
-    A) Pairwise: Only [resume, jd]. Simple, but IDF relies on 2 documents.
-    B) Domain corpus: A larger collection of job descriptions/resumes. More stable IDF, but requires a corpus.
-    
-    This function should:
-    - Create TF-IDF representations.
-    - Transform resume and JD into the same feature space.
-    - Calculate cosine similarity between the vectors.
-    - Return a normalized similarity score (0.0 to 1.0).
-    
-    Args:
-        resume_text (str): Preprocessed resume text.
-        jd_text (str): Preprocessed job description text.
-        
-    Returns:
-        float: Lexical similarity score.
+    1. Concept: Weighted Pairwise TF-IDF Lexical Similarity
+    2. Why: Establishes a baseline for exact keyword overlap, but heavily boosts recognized tech skills to silence noise.
+    3. Input: Cleaned resume and JD text strings.
+    4. Output: Cosine similarity score (float).
+    5. Library: scikit-learn TfidfVectorizer and scipy.sparse for weighting.
     """
-    # Phase 2 TODO: Implement TF-IDF vectorization
-    # Phase 2 TODO: Ensure both documents are vectorized in the same vocabulary space
-    # Phase 3 TODO: Calculate and return cosine similarity
-    pass
+    if not resume_text or not jd_text:
+        return 0.0
+        
+    vectorizer = TfidfVectorizer(ngram_range=(1, 2))
+    
+    try:
+        tfidf_matrix = vectorizer.fit_transform([resume_text, jd_text])
+    except ValueError:
+        return 0.0
+        
+    # --- NOISE REDUCTION (Signal Boosting) ---
+    skills = load_tech_skills()
+    vocab = vectorizer.vocabulary_
+    
+    # By default every word has a weight of 1.0
+    weights = np.ones(len(vocab))
+    
+    # If the word is a recognized skill, boost its mathematical importance by 5x
+    for term, idx in vocab.items():
+        if term in skills:
+            weights[idx] = 5.0
+            
+    # Apply the weight matrix to the original TF-IDF matrix
+    weight_matrix = sp.diags(weights)
+    weighted_tfidf = tfidf_matrix * weight_matrix
+        
+    similarity = cosine_similarity(weighted_tfidf[0:1], weighted_tfidf[1:2])
+    return float(similarity[0][0])

@@ -1,5 +1,5 @@
 """
-Document parsing module to extract text from PDF and DOCX files.
+Document parsing module for extracting text from PDFs and DOCX files.
 
 IMPORTANT IMPLEMENTATION CONSTRAINT:
 When implementing components in this module, first explain in comments:
@@ -11,44 +11,50 @@ When implementing components in this module, first explain in comments:
 Do not dump unexplained code.
 """
 
+import pdfplumber
+import docx
+
 def extract_pdf_text(file) -> str:
     """
-    Extracts text from a PDF file.
-    
-    Args:
-        file: A file-like object (e.g., uploaded via Streamlit).
-        
-    Returns:
-        str: Extracted text.
+    1. Concept: PDF Text Extraction
+    2. Why: To convert uploaded PDF resumes into raw text strings.
+    3. Input: A file-like object (e.g., BytesIO from Streamlit).
+    4. Output: Extracted text as a single string.
+    5. Library: pdfplumber.open() reads the PDF, page.extract_text() gets text.
     """
-    # Phase 7 TODO: Implement PDF parsing (e.g., using pdfplumber)
-    # Phase 7 TODO: Handle edge cases: scanned/image-only PDFs, empty extraction, multi-column layouts, tables, headers/footers, unusual encoding.
-    pass
+    with pdfplumber.open(file) as pdf:
+        text = []
+        for page in pdf.pages:
+            page_text = page.extract_text()
+            if page_text:  # Check if text was actually extracted from the page
+                text.append(page_text)
+    return " ".join(text)
 
 def extract_docx_text(file) -> str:
     """
-    Extracts text from a DOCX file.
-    
-    Args:
-        file: A file-like object.
-        
-    Returns:
-        str: Extracted text.
+    1. Concept: DOCX Text Extraction
+    2. Why: To convert uploaded Word documents into raw text strings.
+    3. Input: A file-like object (e.g., BytesIO from Streamlit).
+    4. Output: Extracted text as a single string.
+    5. Library: docx.Document() reads the DOCX, doc.paragraphs gets text blocks.
     """
-    # Phase 7 TODO: Implement DOCX parsing (e.g., using python-docx)
-    pass
+    doc = docx.Document(file)
+    paragraphs = [p.text for p in doc.paragraphs if p.text]
+    return " ".join(paragraphs)
 
 def extract_resume_text(file, filename: str) -> str:
     """
-    Wrapper function to handle text extraction based on file extension.
-    
-    Args:
-        file: A file-like object.
-        filename (str): Name of the file to determine extension.
-        
-    Returns:
-        str: Extracted text.
+    1. Concept: File Router
+    2. Why: To automatically route the uploaded file to the correct parser based on extension.
+    3. Input: File-like object and the string filename.
+    4. Output: Extracted text as a single string.
+    5. Library: Standard Python string methods (.lower(), .endswith()).
     """
-    # Phase 7 TODO: Check file extension and route to extract_pdf_text or extract_docx_text
-    # Phase 7 TODO: Handle unsupported file types cleanly
-    pass
+    filename_lower = filename.lower()
+    
+    if filename_lower.endswith(".pdf"):
+        return extract_pdf_text(file)
+    elif filename_lower.endswith(".docx"):
+        return extract_docx_text(file)
+    else:
+        raise ValueError(f"Unsupported file format. Please upload a PDF or DOCX file. File: {filename}")

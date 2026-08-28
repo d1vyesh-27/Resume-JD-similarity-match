@@ -2,18 +2,31 @@
 Tests for the lexical TF-IDF matcher module.
 """
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from src.matcher import calculate_tfidf_score
+
 def test_identical_documents():
-    # TODO: Verify that identical documents produce a high similarity score (close to 1.0)
-    pass
+    text = "python developer experience"
+    score = calculate_tfidf_score(text, text)
+    assert score > 0.99
 
 def test_unrelated_documents():
-    # TODO: Verify that completely unrelated documents produce a lower similarity score
-    pass
+    resume = "chef cooking food restaurant"
+    jd = "python developer software engineering"
+    score = calculate_tfidf_score(resume, jd)
+    assert score < 0.1
 
 def test_empty_input():
-    # TODO: Verify that empty documents are handled gracefully
-    pass
+    assert calculate_tfidf_score("", "python") == 0.0
+    assert calculate_tfidf_score("python", "") == 0.0
+    assert calculate_tfidf_score("", "") == 0.0
 
 def test_same_feature_space():
-    # TODO: Verify that vectors are created in the same feature space
-    pass
+    # Vectors should be aligned; partial overlap should return a medium score
+    resume = "python django developer"
+    jd = "python developer"
+    score = calculate_tfidf_score(resume, jd)
+    assert 0.3 < score < 0.99
