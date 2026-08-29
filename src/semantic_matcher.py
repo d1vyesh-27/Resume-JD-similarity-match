@@ -21,7 +21,7 @@ def load_embedding_model():
     4. Output: SentenceTransformer instance.
     5. Library: sentence_transformers.
     """
-    return SentenceTransformer('all-MiniLM-L6-v2')
+    return SentenceTransformer('BAAI/bge-small-en-v1.5')
 
 def calculate_semantic_score(resume_text: str, jd_text: str, model=None) -> float:
     """

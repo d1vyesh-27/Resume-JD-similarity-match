@@ -12,21 +12,40 @@ from src.keyword_extractor import extract_jd_skills, analyze_skill_gap
 
 def main():
     st.set_page_config(page_title="Resume Matcher", layout="wide")
-    st.title("Resume-to-Job-Description Match Scorer")
     
-    st.write("Welcome to the Resume Matcher application.")
-    st.write("Note: Similarity scores are not hiring probabilities and should not be interpreted as the percentage of job requirements satisfied.")
+    # Title in the middle top
+    st.markdown(
+        """
+        <div style='text-align: center; margin-top: -2rem; margin-bottom: 2rem;'>
+            <h1>Resume Job Description Similarity Score</h1>
+            <p style='color: gray;'>Note: Similarity scores are not hiring probabilities and should not be interpreted as the percentage of job requirements satisfied.</p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
     
-    # Phase 8: Create UI for resume upload
-    st.subheader("1. Upload Resume")
-    uploaded_file = st.file_uploader("Upload a PDF or DOCX file", type=["pdf", "docx"])
+    st.divider()
     
-    # Phase 8: Create UI for pasted Job Description
-    st.subheader("2. Paste Job Description")
-    jd_text = st.text_area("Paste the job description text here:", height=200)
+    # Divide into 2 sections
+    col_upload, col_paste = st.columns(2)
+    
+    with col_upload:
+        st.subheader("📄 Upload Resume")
+        uploaded_file = st.file_uploader("Upload a PDF or DOCX file", type=["pdf", "docx"], label_visibility="collapsed")
+        
+    with col_paste:
+        st.subheader("📋 Paste Job Description")
+        jd_text = st.text_area("Paste the job description text here:", height=200, label_visibility="collapsed")
+        st.caption("💡 *Tip: For the best results, try to paste only the core requirements and responsibilities. Removing redundant boilerplate (like company culture or benefits) improves accuracy.*")
+        
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # Phase 8: Add [ Analyze ] button and validate inputs
-    if st.button("Analyze Match"):
+    # Just below it analyze button
+    col_empty1, col_btn, col_empty2 = st.columns([3, 2, 3])
+    with col_btn:
+        analyze_clicked = st.button("🔍 Analyze Match", use_container_width=True, type="primary")
+        
+    if analyze_clicked:
         if not uploaded_file or not jd_text.strip():
             st.error("Please upload a resume AND paste a job description!")
             return
@@ -39,19 +58,25 @@ def main():
                 st.error(str(e))
                 return
                 
+            resume_text_to_process = resume_text
+            jd_text_to_process = jd_text
+                
             # Phase 1: Call preprocessing on resume and JD
-            clean_resume = clean_text(resume_text)
-            clean_jd = clean_text(jd_text)
+            clean_resume = clean_text(resume_text_to_process)
+            clean_jd = clean_text(jd_text_to_process)
             
             # Phase 2: Call TF-IDF matcher for lexical baseline
             lexical_score = calculate_tfidf_score(clean_resume, clean_jd)
             
             # Phase 4: Call semantic matcher for semantic similarity
-            semantic_score = calculate_semantic_score(clean_resume, clean_jd)
+            # IMPORTANT: We pass the raw text here so the model retains the natural sentence structure and grammar, avoiding artificially high semantic scores.
+            semantic_score = calculate_semantic_score(resume_text_to_process, jd_text_to_process)
             
             # Phase 6: Call skill extraction for explicit skill-gap analysis
             jd_skills = extract_jd_skills(jd_text)
             skill_gap = analyze_skill_gap(jd_skills, resume_text)
+            
+            coverage = skill_gap.get('coverage', 0.0)
             
             st.divider()
             st.subheader("Analysis Results")
@@ -63,7 +88,6 @@ def main():
             with col2:
                 st.metric(label="Semantic Match", value=f"{semantic_score * 100:.1f}%")
             with col3:
-                coverage = skill_gap.get('coverage', 0.0)
                 st.metric(label="Skill Coverage", value=f"{coverage * 100:.1f}%")
             
             st.divider()
@@ -92,14 +116,38 @@ def main():
                     
             st.divider()
             
-            # Phase 8: Add an Interpretation section
-            st.subheader("💡 Interpretation")
+            # Reasoning
+            st.subheader("💡 Reasoning")
             if semantic_score > lexical_score + 0.2:
-                st.info("The semantic score is significantly higher than the lexical score. This candidate may have the right experience described in different words than the job description.")
+                st.info("The Semantic score is significantly higher than the Lexical score. This is normal and ideal! It indicates the candidate has the right contextual experience described in natural language, even without keyword-for-keyword exactness.")
             elif lexical_score > semantic_score + 0.2:
-                st.warning("The lexical score is significantly higher than the semantic score. This candidate might be keyword stuffing, or their context doesn't match the job description.")
+                st.warning("The Lexical score is significantly higher than the Semantic score. This candidate might be keyword stuffing, or their context doesn't logically match the job description despite using the same words.")
             else:
-                st.info("The lexical and semantic scores are balanced, suggesting the resume aligns well with both the keywords and the meaning of the job description.")
+                st.info("The Lexical and Semantic scores are balanced. The resume aligns well with both the exact keywords and the underlying meaning of the job description.")
+                
+    st.divider()
+    
+    st.markdown(
+        """
+        <div style='background-color: #262730; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #4B4B52;'>
+            <p><strong>🧠 Note on Scoring</strong><br>
+            In real-world scenarios, prioritize the <strong>Semantic Match</strong> and <strong>Skill Coverage</strong>. The Lexical (TF-IDF) score requires exact word-for-word overlap and naturally provides less value for well-written, natural language resumes.</p>
+        </div>
+        <br>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # My details
+    st.markdown(
+        """
+        <div style='text-align: center; color: gray;'>
+            <p><strong>Developed by Divyesh Kuduva</strong></p>
+            <p>Resume-JD Similarity Matching Engine</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()
