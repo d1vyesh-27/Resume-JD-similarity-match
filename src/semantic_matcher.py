@@ -41,5 +41,19 @@ def calculate_semantic_score(resume_text: str, jd_text: str, model=None) -> floa
     embeddings2 = model.encode(jd_text, convert_to_tensor=True)
     
     cosine_scores = util.cos_sim(embeddings1, embeddings2)
-    return float(cosine_scores[0][0])
+    raw_score = float(cosine_scores[0][0])
+    
+    # Dense embeddings naturally cluster in a narrow cone in vector space. 
+    # For bge-small, the "noise floor" for two English documents is ~0.40.
+    # The "perfect match" ceiling for two highly similar but non-identical documents is ~0.85.
+    # We apply a min-max scaling to stretch the [0.40, 0.85] range across [0.0, 1.0].
+    baseline = 0.40
+    ceiling = 0.85
+    
+    adjusted_score = (raw_score - baseline) / (ceiling - baseline)
+    
+    # Bound the score between 0.0 and 1.0 (so it can't go below 0% or above 100%)
+    final_score = max(0.0, min(1.0, adjusted_score))
+    
+    return final_score
 
