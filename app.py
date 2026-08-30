@@ -118,25 +118,44 @@ def main():
             
             # Reasoning
             st.subheader("💡 Reasoning")
-            if semantic_score > lexical_score + 0.2:
-                st.info("The Semantic score is significantly higher than the Lexical score. This is normal and ideal! It indicates the candidate has the right contextual experience described in natural language, even without keyword-for-keyword exactness.")
-            elif lexical_score > semantic_score + 0.2:
-                st.warning("The Lexical score is significantly higher than the Semantic score. This candidate might be keyword stuffing, or their context doesn't logically match the job description despite using the same words.")
+            
+            # All three high
+            if semantic_score >= 0.5 and lexical_score >= 0.3 and coverage >= 0.4:
+                st.success("Strong match — resume aligns on exact keywords, underlying meaning, and required skills.")
+                
+            # Semantic high, lexical notably lower, skill moderate+
+            elif semantic_score >= 0.5 and lexical_score < 0.3 and coverage >= 0.2:
+                st.success("Strong conceptual fit — resume covers the underlying meaning and skills of this role even where exact wording differs.")
+                
+            # Lexical high, semantic notably lower
+            elif lexical_score >= 0.3 and semantic_score < 0.5:
+                st.warning("Resume shares keywords with this posting, but overall context alignment is weaker — possible keyword overlap without full domain fit.")
+                
+            # All three low
+            elif semantic_score < 0.25 and lexical_score < 0.1 and coverage < 0.2:
+                st.error("Weak match — this role differs substantially from the resume in wording, meaning, and required skills.")
+                
+            # Skill low but semantic/lexical moderate+
+            elif coverage < 0.4 and (semantic_score >= 0.25 or lexical_score >= 0.1):
+                st.info("Conceptually related field, but missing several of the specific required skills.")
+                
             else:
-                st.info("The Lexical and Semantic scores are balanced. The resume aligns well with both the exact keywords and the underlying meaning of the job description.")
+                st.info("Mixed signals — review the individual scores above for a detailed breakdown.")
+                
+            # Conditional Note on Scoring (Only show if lexical is dragging down a good semantic match)
+            if (semantic_score - lexical_score > 0.2) and (semantic_score > 0.4):
+                st.markdown(
+                    """
+                    <br>
+                    <div style='background-color: #262730; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #4B4B52;'>
+                        <p><strong>🧠 Note on Scoring</strong><br>
+                        In real-world scenarios, prioritize the <strong>Semantic Match</strong> and <strong>Skill Coverage</strong>. The Lexical (TF-IDF) score requires exact word-for-word overlap and naturally provides less value for well-written, natural language resumes.</p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
                 
     st.divider()
-    
-    st.markdown(
-        """
-        <div style='background-color: #262730; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #4B4B52;'>
-            <p><strong>🧠 Note on Scoring</strong><br>
-            In real-world scenarios, prioritize the <strong>Semantic Match</strong> and <strong>Skill Coverage</strong>. The Lexical (TF-IDF) score requires exact word-for-word overlap and naturally provides less value for well-written, natural language resumes.</p>
-        </div>
-        <br>
-        """,
-        unsafe_allow_html=True
-    )
     
     # My details
     st.markdown(
