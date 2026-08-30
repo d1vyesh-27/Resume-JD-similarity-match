@@ -19,9 +19,9 @@ import re
 def get_spacy_model():
     try:
         return spacy.load("en_core_web_sm")
-    except OSError:
-        import subprocess
-        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+    except Exception:
+        from spacy.cli import download
+        download("en_core_web_sm")
         return spacy.load("en_core_web_sm")
 
 TECHNICAL_ALIASES = {
