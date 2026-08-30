@@ -17,15 +17,7 @@ import re
 
 @st.cache_resource
 def get_spacy_model():
-    try:
-        return spacy.load("en_core_web_sm")
-    except Exception:
-        from spacy.cli import download
-        try:
-            download("en_core_web_sm")
-        except SystemExit:
-            pass
-        return spacy.load("en_core_web_sm")
+    return spacy.load("en_core_web_sm")
 
 TECHNICAL_ALIASES = {
     # C/C++ Family
