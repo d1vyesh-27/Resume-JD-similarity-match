@@ -21,7 +21,10 @@ def get_spacy_model():
         return spacy.load("en_core_web_sm")
     except Exception:
         from spacy.cli import download
-        download("en_core_web_sm")
+        try:
+            download("en_core_web_sm")
+        except SystemExit:
+            pass
         return spacy.load("en_core_web_sm")
 
 TECHNICAL_ALIASES = {
