@@ -142,14 +142,16 @@ def main():
             else:
                 st.info("Mixed signals — review the individual scores above for a detailed breakdown.")
                 
-            # Conditional Note on Scoring (Only show if lexical is dragging down a good semantic match)
-            if (semantic_score - lexical_score > 0.2) and (semantic_score > 0.4):
+            # Conditional Note on Scoring: Show when the three scores meaningfully disagree (e.g. >30% spread)
+            max_score = max(semantic_score, lexical_score, coverage)
+            min_score = min(semantic_score, lexical_score, coverage)
+            if max_score - min_score > 0.3:
                 st.markdown(
                     """
                     <br>
                     <div style='background-color: #262730; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #4B4B52;'>
                         <p><strong>🧠 Note on Scoring</strong><br>
-                        In real-world scenarios, prioritize the <strong>Semantic Match</strong> and <strong>Skill Coverage</strong>. The Lexical (TF-IDF) score requires exact word-for-word overlap and naturally provides less value for well-written, natural language resumes.</p>
+                        Each score measures something different: lexical shows exact keyword overlap, semantic shows conceptual fit, skill coverage shows specific requirement gaps. A strong match usually shows agreement across at least two of the three — treat a single outlier score with more caution than a signal all three agree on.</p>
                     </div>
                     """,
                     unsafe_allow_html=True
