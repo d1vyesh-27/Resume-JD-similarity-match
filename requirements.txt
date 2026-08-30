@@ -1,4 +1,4 @@
-numpy
+numpy<2.0.0
 pandas
 scikit-learn
 spacy>=3.7,<3.8
