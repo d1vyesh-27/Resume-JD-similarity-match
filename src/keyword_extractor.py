@@ -48,9 +48,11 @@ def extract_jd_skills(jd_text: str) -> list:
     jd_lower = jd_text.lower()
     
     # 3. Create a 'padded' version of the text.
-    # We use regex to replace punctuation with spaces, and add a space to the very beginning and end.
-    # This guarantees every word is surrounded by spaces (e.g., "Python," becomes " Python ").
-    padded_jd = " " + re.sub(r'[\n\t.,;()!]', ' ', jd_lower) + " "
+    # We use regex to replace punctuation (including slashes and ampersands) with spaces.
+    padded_jd = " " + re.sub(r'[\n\t.,;()!/&]', ' ', jd_lower) + " "
+    
+    # Replace the exact word "and" with a space so "aws and gcp" is split properly.
+    padded_jd = re.sub(r'\band\b', ' ', padded_jd)
     
     # 4. Use a 'set' to store extracted skills. Sets automatically prevent duplicates.
     # If the JD says both "React" and "ReactJS", we only want "React" added once.

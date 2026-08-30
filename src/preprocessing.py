@@ -11,15 +11,18 @@ When implementing components in this module, first explain in comments:
 Do not dump unexplained code.
 """
 
+import streamlit as st
 import spacy
 import re
 
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    import subprocess
-    subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-    nlp = spacy.load("en_core_web_sm")
+@st.cache_resource
+def get_spacy_model():
+    try:
+        return spacy.load("en_core_web_sm")
+    except OSError:
+        import subprocess
+        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+        return spacy.load("en_core_web_sm")
 
 TECHNICAL_ALIASES = {
     # C/C++ Family
@@ -120,6 +123,7 @@ def clean_text(text: str) -> str:
     for original_term, safe_term in TECHNICAL_ALIASES.items():
         cleaned_text = cleaned_text.replace(original_term, safe_term)
         
+    nlp = get_spacy_model()
     doc = nlp(cleaned_text)
     
     final_tokens = []

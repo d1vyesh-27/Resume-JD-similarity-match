@@ -11,9 +11,11 @@ When implementing components in this module, first explain in comments:
 Do not dump unexplained code.
 """
 
+import streamlit as st
 import torch
 from sentence_transformers import SentenceTransformer, util
 
+@st.cache_resource
 def load_embedding_model():
     """
     1. Concept: Sentence Embeddings Model
