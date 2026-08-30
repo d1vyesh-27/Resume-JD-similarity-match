@@ -84,7 +84,7 @@ def main():
             # Phase 8: Display results in distinct sections
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric(label="Lexical Match (TF-IDF)", value=f"{lexical_score * 100:.1f}%")
+                st.metric(label="Lexical Match (Term Frequency)", value=f"{lexical_score * 100:.1f}%")
             with col2:
                 st.metric(label="Semantic Match", value=f"{semantic_score * 100:.1f}%")
             with col3:
