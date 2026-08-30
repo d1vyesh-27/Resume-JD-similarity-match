@@ -52,7 +52,7 @@ def calculate_tfidf_score(resume_text: str, jd_text: str) -> float:
     if not resume_text or not jd_text:
         return 0.0
         
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2))
+    vectorizer = TfidfVectorizer(ngram_range=(1, 2), use_idf=False)
     
     try:
         tfidf_matrix = vectorizer.fit_transform([resume_text, jd_text])

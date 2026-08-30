@@ -13,6 +13,8 @@ env/
 
 data/*
 !data/README.md
+!data/*.csv
+!data/*.json
 
 *.pdf
 *.docx

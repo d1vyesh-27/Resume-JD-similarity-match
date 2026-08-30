@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from src.preprocessing import clean_text
 from src.matcher import calculate_tfidf_score
-from src.semantic_matcher import calculate_semantic_score
+from src.semantic_matcher import calculate_semantic_score, load_embedding_model
 from src.keyword_extractor import extract_jd_skills, analyze_skill_gap
 
 # --- SYNTHETIC DATASET ---
@@ -41,6 +41,9 @@ def main():
     print(f"\nStarting 5x5 Matrix Evaluation (25 total comparisons)...")
     print("This should only take about 10 seconds.")
     
+    # Load model once to speed up the loop
+    semantic_model = load_embedding_model()
+    
     count = 0
     for r_idx, resume_row in enumerate(resumes):
         raw_resume = resume_row['Text']
@@ -56,7 +59,7 @@ def main():
             
             # Scores
             lexical = calculate_tfidf_score(clean_res, clean_jd_text)
-            semantic = calculate_semantic_score(clean_res, clean_jd_text)
+            semantic = calculate_semantic_score(clean_res, clean_jd_text, model=semantic_model)
             gap = analyze_skill_gap(jd_skills, raw_resume)
             
             results.append({
@@ -77,9 +80,9 @@ def main():
     df = pd.DataFrame(results)
     output_path = os.path.join(os.path.dirname(__file__), "..", "data", "evaluation_matrix_hf.csv")
     df.to_csv(output_path, index=False)
-    print(f"\n✅ Matrix Evaluation complete! Saved 625 scores to: {output_path}")
+    print(f"\n[OK] Matrix Evaluation complete! Saved 625 scores to: {output_path}")
     
-    print("\n💡 Open data/evaluation_matrix_hf.csv in Excel/Google Sheets to analyze the scores!")
+    print("\n[INFO] Open data/evaluation_matrix_hf.csv in Excel/Google Sheets to analyze the scores!")
 
 if __name__ == "__main__":
     main()
